@@ -326,15 +326,18 @@ where
         }
     }
 
-    fn convert_str<'a>(buf: &'a [u8], buf_end_offset: u64) -> Result<&'a str> {
-        match str::from_utf8(buf) {
-            Ok(s) => Ok(s),
-            Err(e) => {
-                let shift = buf.len() - e.valid_up_to();
-                let offset = buf_end_offset - shift as u64;
-                Err(Error::syntax(ErrorCode::InvalidUtf8, offset))
-            }
-        }
+    fn convert_str<'a>(buf: &'a [u8], _buf_end_offset: u64) -> Result<&'a str> {
+        // ! This is the change necessary to allow non utf-8 strings to be deserialized
+        // TODO find another way around this
+        Ok(unsafe { str::from_utf8_unchecked(buf) })
+        // match str::from_utf8(buf) {
+        //     Ok(s) => Ok(s),
+        //     Err(e) => {
+        //         let shift = buf.len() - e.valid_up_to();
+        //         let offset = buf_end_offset - shift as u64;
+        //         Err(Error::syntax(ErrorCode::InvalidUtf8, offset))
+        //     }
+        // }
     }
 
     fn parse_str<V>(&mut self, len: usize, visitor: V) -> Result<V::Value>
